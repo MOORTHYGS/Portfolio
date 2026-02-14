@@ -1,162 +1,64 @@
-// Custom Cursor
-const cursorDot = document.querySelector('[data-cursor-dot]');
-const cursorOutline = document.querySelector('[data-cursor-outline]');
+const menuToggle = document.getElementById('menu-toggle');
+const navbar = document.getElementById('navbar');
 
-window.addEventListener('mousemove', (e) => {
-    const posX = e.clientX;
-    const posY = e.clientY;
-
-    cursorDot.style.left = `${posX}px`;
-    cursorDot.style.top = `${posY}px`;
-
-    // Simple lag effect for outline using Animation API or just direct set with CSS transition
-    cursorOutline.animate({
-        left: `${posX}px`,
-        top: `${posY}px`
-    }, { duration: 500, fill: "forwards" });
+menuToggle?.addEventListener('click', () => {
+    navbar.classList.toggle('open');
 });
 
-// Interactive elements hover effect for cursor
-const interactiveElements = document.querySelectorAll('a, button, .project-card, .skill-tags span');
-interactiveElements.forEach(el => {
-    el.addEventListener('mouseenter', () => {
-        cursorOutline.style.width = '60px';
-        cursorOutline.style.height = '60px';
-        cursorOutline.style.backgroundColor = 'rgba(0, 243, 255, 0.1)';
-    });
-    el.addEventListener('mouseleave', () => {
-        cursorOutline.style.width = '30px';
-        cursorOutline.style.height = '30px';
-        cursorOutline.style.backgroundColor = 'transparent';
-    });
+document.querySelectorAll('.navbar a').forEach((link) => {
+    link.addEventListener('click', () => navbar.classList.remove('open'));
 });
 
-// Typing Text Effect
 const typingText = document.getElementById('typing-text');
-const roles = ['Apps', 'Systems', 'Tools', 'Solutions'];
-let roleIndex = 0;
+const phrases = [
+    'Cloud MES backend',
+    'AVEVA integration work',
+    'MSSQL archive jobs',
+    'Web app development'
+];
+
+let phraseIndex = 0;
 let charIndex = 0;
-let isDeleting = false;
+let deleting = false;
 
-function typeRoles() {
-    const currentRole = roles[roleIndex];
+function typeLoop() {
+    if (!typingText) return;
 
-    if (isDeleting) {
-        typingText.textContent = currentRole.substring(0, charIndex - 1);
-        charIndex--;
-    } else {
-        typingText.textContent = currentRole.substring(0, charIndex + 1);
-        charIndex++;
+    const current = phrases[phraseIndex];
+    typingText.textContent = deleting
+        ? current.slice(0, --charIndex)
+        : current.slice(0, ++charIndex);
+
+    let speed = deleting ? 55 : 95;
+
+    if (!deleting && charIndex === current.length) {
+        deleting = true;
+        speed = 1300;
+    } else if (deleting && charIndex === 0) {
+        deleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        speed = 320;
     }
 
-    let typeSpeed = isDeleting ? 100 : 200;
-
-    if (!isDeleting && charIndex === currentRole.length) {
-        isDeleting = true;
-        typeSpeed = 2000; // Pause at end
-    } else if (isDeleting && charIndex === 0) {
-        isDeleting = false;
-        roleIndex = (roleIndex + 1) % roles.length;
-        typeSpeed = 500;
-    }
-
-    setTimeout(typeRoles, typeSpeed);
+    setTimeout(typeLoop, speed);
 }
 
-document.addEventListener('DOMContentLoaded', typeRoles);
+window.addEventListener('DOMContentLoaded', typeLoop);
 
+const sections = document.querySelectorAll('main section[id]');
+const navLinks = document.querySelectorAll('.navbar a');
 
-// Canvas Particle Network Animation
-const canvas = document.getElementById('hero-canvas');
-const ctx = canvas.getContext('2d');
+window.addEventListener('scroll', () => {
+    const checkpoint = window.scrollY + 140;
 
-let width, height;
-let particles = [];
-const particleCount = 60;
-const connectionDistance = 150;
+    sections.forEach((section) => {
+        const top = section.offsetTop;
+        const bottom = top + section.offsetHeight;
 
-function resize() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-class Particle {
-    constructor() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.size = Math.random() * 2 + 1;
-    }
-
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        if (this.x < 0 || this.x > width) this.vx *= -1;
-        if (this.y < 0 || this.y > height) this.vy *= -1;
-    }
-
-    draw() {
-        ctx.fillStyle = 'rgba(0, 243, 255, 0.5)';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
-function initParticles() {
-    particles = [];
-    for (let i = 0; i < particleCount; i++) {
-        particles.push(new Particle());
-    }
-}
-
-function animateParticles() {
-    ctx.clearRect(0, 0, width, height);
-
-    for (let i = 0; i < particles.length; i++) {
-        particles[i].update();
-        particles[i].draw();
-
-        for (let j = i; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < connectionDistance) {
-                ctx.strokeStyle = `rgba(0, 243, 255, ${1 - distance / connectionDistance})`;
-                ctx.lineWidth = 0.5;
-                ctx.beginPath();
-                ctx.moveTo(particles[i].x, particles[i].y);
-                ctx.lineTo(particles[j].x, particles[j].y);
-                ctx.stroke();
-            }
-        }
-    }
-    requestAnimationFrame(animateParticles);
-}
-
-initParticles();
-animateParticles();
-
-// Scroll Animations (Intersection Observer)
-const observerOptions = {
-    threshold: 0.1
-};
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('fade-in-up'); // Add your CSS animation class here
-            observer.unobserve(entry.target);
+        if (checkpoint >= top && checkpoint < bottom) {
+            navLinks.forEach((link) => link.classList.remove('active'));
+            const active = document.querySelector(`.navbar a[href="#${section.id}"]`);
+            active?.classList.add('active');
         }
     });
-}, observerOptions);
-
-document.querySelectorAll('.section-title, .about-text, .timeline-item, .project-card').forEach(el => {
-    // el.classList.add('hidden'); // Initially hide
-    observer.observe(el);
 });
